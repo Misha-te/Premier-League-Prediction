@@ -2,7 +2,27 @@
 STAT-155: Final Project
 # Home Advantage in the Premier League
 
+
 Final project for an introductory statistics course analyzing home-field advantage in the English Premier League using logistic regression, exploratory data analysis, and predictive modeling in R.
+## Accessing the Project
+
+The full statistical analysis, methodology, visualizations, and results are available in the project PDF included in this repository.
+
+* You can read the final paper directly on GitHub by opening the PDF file.
+* You can also download the `.qmd` (Quarto Markdown) source file and open it in RStudio to view, edit, or render the project yourself.
+
+To render the project locally:
+
+1. Open the `.qmd` file in RStudio
+2. Install the required R packages
+3. Click **Render** or run:
+
+```r
+quarto render filename.qmd
+```
+
+The dataset used for the analysis is included in the repository.
+
 
 ## Overview
 
@@ -125,6 +145,19 @@ These variables may influence home advantage but are difficult to quantify empir
 * Novillo et al. (2024) — *A Multilayer Network Framework for Soccer Analysis*
 * ESPN Match Statistics
 * World Soccer Talk Premier League Viewership Data
+
+## Why Soccer Prediction Matters
+
+Soccer prediction goes beyond sports analytics. Predictive models are used in statistics, machine learning, and network analysis to better understand decision-making, performance, and patterns within complex systems. In football, predictions can help teams evaluate tactics, player efficiency, recruitment strategies, and match preparation. They are also widely used by analysts, journalists, and fans to support storytelling and discussion around the game.
+
+Beyond sports, similar predictive methods are applied in fields such as epidemiology, finance, and social network analysis, where understanding interactions and outcomes is essential.
+
+## Ethical Implications
+
+Although predictive analytics can provide valuable insights, they also raise ethical concerns. One major concern is sports betting, where predictive models may encourage gambling behavior and financial risk. Misuse or overreliance on prediction systems can contribute to addictive behavior and significant monetary losses.
+
+Additionally, predictive models may oversimplify complex human factors in sports, such as psychology, officiating bias, injuries, and crowd influence. Because models are limited by the data available, predictions should be interpreted carefully rather than treated as absolute outcomes.
+
 
 ## Future Improvements
 
