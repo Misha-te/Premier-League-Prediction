@@ -1,0 +1,270 @@
+---
+title: "Home Advantage in the Premier League"
+author: "Neko Henderson, Tyler Smith, Misha Awan, Jorge Mico-Crump"
+format: html
+editor: visual
+---
+
+```{r setup}
+#| include: false
+
+# Do NOT modify this chunk
+knitr::opts_chunk$set(
+  collapse = TRUE, 
+  warning = FALSE,
+  message = FALSE,
+  fig.height = 2.75, 
+  fig.width = 4.25,
+  fig.env = 'figure',
+  fig.pos = 'h',
+  fig.align = 'center')
+
+# Use a color blind friendly color palette throughout doc
+library(tidyverse)
+cb_palette <- c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+scale_colour_discrete <- function(...) scale_colour_manual(values = cb_palette, ...)
+scale_fill_discrete   <- function(...) scale_fill_manual(values = cb_palette, ...)
+theme_set(theme_bw())
+```
+
+Loading the data and packages
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(broom)
+soccer<- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2023/2023-04-04/soccer21-22.csv")
+```
+
+## Introduction
+
+Football (American English-Soccer) is like no other sport, competition, or event across the globe. It reaches billions around the world who play and watch the game, across different races, religions, and cultures. England’s Premier League is at the top of the one percent. Widely regarded as the best league in the world for competition and quality, it has been one of the biggest influences on the growth, evolution, and improvement of football. Recent figures suggest that each Premier League game has over 600 million viewers globally, with games between the biggest clubs reaching 700-750 million viewers (Moore, 2024) . For context, the second-most-watched league is Spain’s top division, LaLiga, with a reported 7.5 million viewers per game. Since its foundation in 1992, the Premier League has been the pride of football. 
+
+We are exploring the research question: Do home teams have an advantage over away teams in the Premier League? In this study, we used total shots taken, shots on target, number of fouls and corners in a match to answer this question. We also created new variables such as shot accuracy and winner. Predicting soccer matches is essential in the following fields. First, scientists use soccer predictions in dynamic networks. In dynamic networking, scientists consider soccer teams as moving networks, players as “nodes” and passes as “edges”. Through this, scientists predict how network density and connectivity lead to success, which has applications in epidemiology- the study of how viruses spread (Novillo et al,2024). Through this, scientists can make informed decisions in a virus outbreak and pandemic. Secondly, predicting soccer helps people who bet to make informed decisions and place winnable bets. This reduces financial losses. Lastly, soccer predictions enhance storytelling as the 600 million soccer enthusiasts and journalists use these statistics to make their opinions. In addition, soccer prediction is used by soccer analysts to identify areas that a team needs to improve, and to make good recommendations on recruitments.
+
+# Data and Exploratory Data Analysis
+
+This data was accessed by Ewan Gomer on Kaggle. Gomer obtained the dataset from the English Premier League data and cleaned it using Google Sheets. Kaggle, on the other hand, is an online public database that allows users to explore data, build machine learning models and participate in data science competitions.
+
+\
+
+The variables relevant to our research question are full-time home goals, full-time away goals, home team shots, away team shots, home team shots on target, away team shots on target, home corners and winner. The winner of the match is categorical and compares the total number of goals scored by both teams and assigns the winner based on who scored more; draws are considered as the away team wins. Home team winners are assigned 1, and away team wins are assigned 0. Table one contains information about our variables of interest, including the mean and standard deviation of each statistic for both home and away teams. As is evident in our table, almost every statistic has a mean that is higher for the home team than the away team. The home team generally takes more shots, scores more goals, and kicks more corner kicks than the away team. 
+
+### Contents of Table 1
+
+```{r}
+# Full time home goals-Mean and Standard Deviation
+soccer %>% 
+  summarise(mean(FTHG),sd(FTHG))
+# Full time away goals
+soccer %>% 
+  summarise(mean(FTAG),sd(FTAG))
+#Home Shots
+soccer %>% 
+  summarise(mean(HS),sd(HS))
+#Home shots on Target
+soccer %>% 
+  summarise(mean(HST),sd(HST))
+#Away shots
+soccer %>% 
+  summarise(mean(AS),sd(AS))
+#Away shots on target
+soccer %>% 
+  summarise(mean(AST),sd(AST))
+
+```
+
+We created the winner and Home Team winner variables.
+
+```{r}
+#Winner
+#Draws as away wins
+soccer<-soccer %>% 
+  mutate(winner=if_else(FTHG>FTAG,1,0))
+#Home Team winner
+# True if Home Team won the first half and false if away won
+soccer<-soccer %>% 
+  mutate(HT_winner=if_else(HTHG>HTAG,T,F))
+
+# They are categorical hence no numerical summaries
+```
+
+### Table 2
+
+This table contains the total counts of home, draws and away wins expressed as percentages. As is shown here, the home team wins nearly 10% more than the away team, suggesting that the home team may have an advantage over the visitors.
+
+```{r}
+# Full time results
+soccer %>% 
+  count(FTR)
+#Full time results with draws added to away wins.
+soccer %>% 
+  count(winner)
+
+#Proportions in perentages
+#Home Wins
+(163/380)*100
+#away wins
+(129/380)*100
+#draws
+(88/380)*100
+
+#In the winner variable, away wins+draws= Away wins
+#Proportion
+(217/380)*100
+
+```
+
+### Table 3
+
+Using the formula- Team shots on target/Team shots\*100, we obtained the team accuracy variable. 
+
+```{r}
+# creating Home Team Accuracy(HTA) and Away team accuracy(ATA)
+soccer<-soccer %>% 
+  mutate(HTA=(HST/HS)*100,ATA=(AST/AS)*100)
+#SD and mean
+soccer %>% 
+  summarise(mean(HTA),mean(ATA),sd(HTA),sd(ATA))
+#Min and Max
+soccer %>% 
+  summarise(min(HTA),min(ATA),max(HTA),max(ATA))
+
+```
+
+\* Data from ESPN and the Premier League contradicts this. 
+
+“ESPN Match Day Statistics”
+
+### Figure 1
+
+Table three is a stacked bar plot of full-time and half-time winners. Home team wins are represented in the left column, away team wins in the right column. In each bar, grey represents the count of the home team leading at halftime, and blue represents the count of the away team leading at halftime. The plot shows that the home team usually wins about two-thirds of the matches they win in the first half. The away team, on the other hand, wins about 10 percent of the matches that the home team won in the first half.
+
+```{r}
+soccer %>%
+  ggplot(aes(x = winner, fill = HT_winner)) + 
+  geom_bar() +
+  labs(x = "Full Time Winner", y = 'Counts', fill = 'Home Time Winner?')+
+  scale_fill_manual(values = c("skyblue", "grey")) + 
+  theme_classic()
+```
+
+### Table 5
+
+```{r}
+soccer2 <-soccer %>%
+ 	mutate(homeWin = as.integer(FTR=="H")) 
+model3 <- glm(homeWin~HS+AS+HST+AST+HF+AF+HC+AC,data=soccer2,family="binomial")
+summary(model3)
+exp(coef(model3))
+
+```
+
+This table explores the change in a home team’s winning probability based on the different variables. Although they are included, home/away shots and home/away fouls have no notable effect on the home team’s winning chances. Additionally, the home/away corners have a counterintuitive per cent change, showing how the data may be flawed, along with the high P-Values for anything but home/away shots on target. Simply put, the two valid variables to analyse in this setting are home/away shots on target, which both also have a significant effect on the probability, whereas the foul and corner data can largely be discarded.
+
+### Figure 2
+
+This figure shows the true proportion of the full-time results, with away wins, home wins and draws. This was the data we manipulated to create the winner variable by counting draws as away wins.
+
+```{r}
+soccer %>%
+  ggplot(aes(x=FTR))+
+  geom_bar()+
+  labs(x="Full Time ")
+```
+
+# Methods
+
+Our logistic regression model is:
+
+**E\[Winner\|Home Team Full time Goals, Total Shots, Shots on Target, Home Team accuracy, Away team accuracy, Half time winner\]=**
+
+β0  + β1(Home Team Full time Goals)+β2(Total shots)+β3(Shots on Target)+β4(Home Team Accuracy)+β5(Away Team Accuracy)+β6(Half Time Winner)
+
+Winner is our dependent variable. Home Team Goals is a quantitative variable, and it is the number of goals scored by the home team; it is our predictor of interest. Total shots and shots on target are confounding variables as they are the sum of the shots taken by both teams and therefore related to both of the teams. Home team and away team accuracy: how the teams are likely to hit the target. The away team's accuracy is higher than the home team's accuracy as the away team takes fewer shots.  Half-time winner is a categorical variable. It is boolean in nature- It is true when the home team won the first half and false when the away team scored more or the half ended in a draw.
+
+ We added the halftime winner because of the nature of football/soccer. Some teams are known to turn their home ground into a “Fortress” and rarely lose at home. For example, Manchester United, one of the league's historic teams, last lost a game they were leading at halftime on May 7, 1984, against Ipswich Town. Given this fact, we decided to include the score at halftime. We also contemplated adding referees and teams as predictors. However, we excluded it because of the number of data points and a big difference between the games managed by the top referee and the bottom referees. Some referees were chosen to officiate as few as nine games, whereas others officiated nearly thirty games, and therefore, including these outliers may distort our results, as the outliers skew key summaries such as mean and standard deviation and hence reduce the predictive power of models. We selected a significance threshold of 0.05 for the hypothesis test and  0.5 for the confusion matrix.
+
+Our null hypothesis is that while adjusting for shots and accuracy, there is no relationship between goals scored by the home team and the outcome of the match.
+
+H0: β1=β2=β3=β4=β5=β6=0
+
+Our alternative hypothesis is: There is a relationship between the outcome of the match and goals scored by the home team(Adjusting for shots and accuracy)
+
+HA: At least one of β1,β2,β3,β4,β5,β6≠0
+
+To evaluate our model, we used the confusion matrix, nested model and an F-test.
+
+# Results
+
+```{r}
+# creating total shots and total shots on target variables
+soccer<-soccer %>%
+  mutate(TotalShots=HS+AS,ShotsOT=HST+AST)
+#the logistic regression model
+soccer_modelm<-glm(winner~FTHG+TotalShots+ShotsOT+HTA+ATA+HT_winner, data=soccer, family="binomial")
+exp(coef(summary(soccer_modelm)))
+# Confidence Interval
+confint(soccer_modelm,level=0.95)
+```
+
+\*exponentiated odds
+
+On average, while holding the other variables constant, we predict that the odds of a team winning are 0.343. For the home goals, our model predicts that the odds of the home team winning are multiplied by 10.361 for every goal they score.  Given a confidence interval of 95%, while holding all the other variables constant, we are sure that the odds of winning are affected by home full-time goals by a multiplicative value that is between 1.834 and 2.92.
+
+```{r}
+#the nested models
+model_half<-
+  glm(winner~TotalShots+ShotsOT+HTA+ATA+HT_winner, data=soccer, family="binomial")
+
+model_full <-glm(winner~FTHG+TotalShots+ShotsOT+HTA+ATA+HT_winner, data=soccer, family="binomial")
+
+anova(model_half,model_full,test='LRT')
+```
+
+Using two nested models, we concluded that we have significant evidence that home goals have a relationship with the outcome of the match, given the p-value is 2.2 × 10\^-16, which is significantly below our threshold of 0.05; therefore, we reject the null hypothesis.
+
+Confusion Matrix -0.5 threshold
+
+```{r}
+threshold <- 0.5
+library(janitor)
+soccer<-soccer %>% 
+  mutate(
+    .fitted=predict(soccer_modelm,newdata = .,type="response"),
+  predictwin=(.fitted>=threshold)
+)
+  
+  
+
+soccer %>%   
+  tabyl(winner,predictwin) %>% 
+  adorn_totals(c("row","col")) 
+```
+
+Based on the data from the table, we found that the accuracy of our model was at 88.33%, the sensitivity was at 79.75%, and the specificity was 86.64%. This shows that our model correctly predicted the outcome of a match 88.33 times out of 100. Interestingly, the model is better at predicting away wins than home wins.
+
+# Conclusion
+
+Exploring the data from the Premier League 2020-2021 season, we can conclude that the home team does have an advantage over away teams as they boast a win rate of 42.89% compared to 33.95% win rate of away sides. Home teams also win about 90% of the matches they lead at halftime. As per the model, a home team's goals significantly affect the outcome of the match.However, there are only a handful of variables that contribute significantly to this outcome. Our data does have some limitations in that we do not address some factors that could be important contributors to the home team advantage. A 2008 study by Richard Pollard discusses some potential factors, including crowd effects, travel effects on away players, familiarity (with the city/stadium), and psychological factors. These are confounding variables that are hard to empirically measure, are not included in our model, and can have an effect on our data that we cannot account for. We kept our data as practical as possible, and did not include any variables that are multicollinear or redundant. Some variables were reused or modified (e.g., shot accuracy) in order to get a more expansive understanding of home team advantage. The consequences of these shortcomings result in an incomplete outcome that should be tested by others and/or with different methods. As for ethical issues, Betting, an application of soccer prediction that we discussed in the introduction, can be addictive, with people losing thousands of dollars as they try to beat the odds in the hope of winning.
+
+### References
+
+Moore, Chris. “World Soccer Talk.” World Soccer Talk, 16 Oct. 2024, [worldsoccertalk.com/news/premier-leagues-jaw-dropping-viewership-crushes-nfl/.](http://worldsoccertalk.com/news/premier-leagues-jaw-dropping-viewership-crushes-nfl/)
+
+\
+
+Newcastle against Westham, 2021-22 English Premier League, Matchday statistics.
+
+<https://www.espn.com/soccer/matchstats/_/gameId/606037>
+
+\
+
+Pollard, R., 2008, Home Advantage in Football: A Current Review of an Unsolved Puzzle: The Open Sports Sciences Journal, v. 1, p. 12–14, [doi:https://doi.org/10.2174/1875399x00801010012.](https://doi.org/10.2174/1875399x00801010012)
+
+Novillo, Á., Gong, B., Martínez, J. H., Resta, R., del Campo, R. L., & Buldú, J. M. (2024). A Multilayer Network Framework for soccer analysis. Chaos, Solitons & Fractals, 178, 114355. 
+
+<https://www.sciencedirect.com/science/article/pii/S0960077923012572?via%3Dihub>
+
+\
